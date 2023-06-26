@@ -1,4 +1,4 @@
-#!/Users/ifor/coding/email_bot/venv/bin/python3.10
+#!/Users/ifor/coding/github/python-gmail-bot/venv/bin/python3.11
 # -*- coding: utf-8 -*-
 import re
 import sys
