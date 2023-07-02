@@ -1,47 +1,68 @@
 from simplegmail import Gmail
-import requests
+from duckduckgo_search import DDGS
+from simplegmail.query import construct_query
 
 gmail = Gmail()
 
-flagged_senders = [
-    "Teilo Lang Ford <teilolangford@gmail.com>"
-    "Ifor Hepton <iforidh@gmail.com>"
-]
+def search(query):
+    with DDGS() as ddgs:
+        results = []
+        for r in ddgs.text('giraffe', region='uk-en', safesearch='Moderate', timelimit='y'):
+            results.append(r)
+        result = []
+        result.append(results[0]['body'])
+        result.append(results.append[0]['href'])
+        return result
 
+def get_queried_inbox(query):
+    messages = gmail.get_unread_inbox()
+    messages = messages = gmail.get_messages(
+        query=construct_query(query)
+    )
+    return messages
+
+def trim_sender(sender):
+    sender = str(sender)
+    sender = sender.split('<')
+    sender = sender[1]
+    sender = sender.split('>')
+    sender = sender[0]
+    return sender
+
+def generate_message(prompt):
+    search = search(prompt)
+    message = f"{search[0]}\n{search[1]}"
 
 def main():
 
-    messages = gmail.get_unread_inbox()
+    messages = get_queried_inbox(
+        query = {
+            'sender': [
+                'teilolangford@gmail.com',
+                'iforidh@gmail.com'
+            ],
+            'unread':True
+        }
+    )
 
     for message in messages:
 
-        if str(message.sender) in flagged_senders:
+        sender = trim_sender(message.sender)
 
-            try:
-                message = str(message.plain)
+        message_str = str(message.plain)
+        reply = generate_message(message_str)
 
-                request = requests.get(
-                    "https://api.duckduckgo.com",
-                    params = {"q": message,"format": "json"}
-                    )
+        params = {
+            "to": sender,
+            "sender": "iforidh@gmail.com",
+            "subject": "Automated reply",
+            "msg_plain": reply,
+            "signature": True
+            }
 
-                data = request.json()
-                
-                print(data["Abstract"])
+        message = gmail.send_message(**params)
 
-
-                '''
-                params = {
-                    "to": message.sender,
-                    "sender": "iforidh@gmail.com.com",
-                    "subject": f"reply to {message.subject}",
-                    "msg_plain": data,
-                    "signature": True
-                    }
-                '''
-                #message.mark_as_read()
-            except TypeError:
-                print("A TypeError occured. There may have been an image in the email.")
+        #message.mark_as_read()
 
 if __name__ == '__main__':
     main()
