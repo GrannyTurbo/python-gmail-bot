@@ -4,65 +4,78 @@ from simplegmail.query import construct_query
 
 gmail = Gmail()
 
+
 def search(query):
     with DDGS() as ddgs:
         results = []
-        for r in ddgs.text('giraffe', region='uk-en', safesearch='Moderate', timelimit='y'):
+        for r in ddgs.text(
+            "giraffe", region="uk-en", safesearch="Moderate", timelimit="y"
+        ):
             results.append(r)
         result = []
-        result.append(results[0]['body'])
-        result.append(results.append[0]['href'])
+        result.append(results[0]["body"])
+        result.append(results[0]["href"])
         return result
+
 
 def get_queried_inbox(query):
     messages = gmail.get_unread_inbox()
-    messages = messages = gmail.get_messages(
-        query=construct_query(query)
-    )
+    messages = messages = gmail.get_messages(query=construct_query(query))
     return messages
+
 
 def trim_sender(sender):
     sender = str(sender)
-    sender = sender.split('<')
+    sender = sender.split("<")
     sender = sender[1]
-    sender = sender.split('>')
+    sender = sender.split(">")
     sender = sender[0]
     return sender
 
+
 def generate_message(prompt):
-    search = search(prompt)
-    message = f"{search[0]}\n{search[1]}"
+    results = search(prompt)
+    message = f"{results[0]}\n{results[1]}"
+    return message
 
 def main():
-
     messages = get_queried_inbox(
-        query = {
-            'sender': [
-                'teilolangford@gmail.com',
-                'iforidh@gmail.com'
+        query={
+            "sender": [
+                #"teilolangford@gmail.com",
+                "iforidh@gmail.com"
             ],
-            'unread':True
+            "unread": True,
         }
     )
 
     for message in messages:
 
-        sender = trim_sender(message.sender)
+        try:
 
-        message_str = str(message.plain)
-        reply = generate_message(message_str)
+            sender = trim_sender(message.sender)
 
-        params = {
-            "to": sender,
-            "sender": "iforidh@gmail.com",
-            "subject": "Automated reply",
-            "msg_plain": reply,
-            "signature": True
-            }
+            message_str = str(message.plain)
+            reply = generate_message(message_str)
 
-        message = gmail.send_message(**params)
+            if reply.strip() != '':
+                print(reply)
+                params = {
+                    "to": sender,
+                    "sender": "iforidh@gmail.com",
+                    "subject": "Automated reply",
+                    "msg_plain": str(reply),
+                    "msg_html": f"<p>{reply}</p>",
+                    "signature": True,
+                }
 
-        #message.mark_as_read()
+                message = gmail.send_message(**params)
 
-if __name__ == '__main__':
+                # message.mark_as_read()
+
+        except IndexError:
+            pass
+
+
+if __name__ == "__main__":
     main()
